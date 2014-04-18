@@ -68,7 +68,7 @@ makeCacheMatrix <- function(x = matrix()) {
 #' 
 #' Singular input
 #' x <- matrix(c(0, 0, 0, 0, 0, 1, 1, 1, 1), nrow=3, ncol=3)
-#' cacheSolve(makeCachedMatrix(x))
+#' cacheSolve(makeCacheMatrix(x))
 #' @return matrix{base}
 cacheSolve <- function(x, ...) {
     ## Return a matrix that is the inverse of 'x'
@@ -79,11 +79,6 @@ cacheSolve <- function(x, ...) {
     
     if( nrow != ncol )
         stop("Not a square matrix!") # a rectangular matrix is non-invertible
-    
-    if(!is.null(inv)) {
-        message("getting cached data")
-        return(inv)
-    }
     
     if(is.null(inv)){
         if(is.singular.matrix(x$get())) {
