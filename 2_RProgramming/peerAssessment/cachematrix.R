@@ -6,9 +6,9 @@ require(roxygen2)
 #' square matrix.
 #' @author Jens Hooge jens.hooge@gmail.com
 
-#' @title Caching a matrix
+#' @title Caching a matrix.
 #' 
-#' @description \code{makeCacheMatrix} caches a matrix
+#' @description \code{makeCacheMatrix} caches a matrix.
 #' 
 #' @details
 #' \code{makeCacheMatrix} expects a matrix x. The inverse, as well as the original matrix
