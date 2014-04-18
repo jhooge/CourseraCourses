@@ -87,7 +87,7 @@ cacheSolve <- function(x, ...) {
     if(is.null(inv)){
         if(is.singular.matrix(data)) {
             warning("Matrix is degenerate! Pseudoinverse has been computed!")
-            inv <-pseudoinverse(data)
+            inv <- pseudoinverse(data)
         } else {
             inv <- solve(data, ...)
         }
