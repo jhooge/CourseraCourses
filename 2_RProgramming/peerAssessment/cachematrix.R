@@ -58,17 +58,21 @@ makeCacheMatrix <- function(x = matrix()) {
 #' @param x A list object to access a cached matrix x
 #' @examples
 #' 
-#' Well-behaved input
+#' Well-behaved input:
 #' x <- matrix(c(1, 0, 5, 2, 1, 6, 3, 4, 0), nrow=3, ncol=3)
-#' cacheSolve(makeCacheMatrix(x))
+#' x_cached <- makeCacheMatrix(x)
+#' cacheSolve(x_cached)
 #' 
-#' Rectangular input
+#' Rectangular input:
 #' x <- matrix(c(1, 1, 1, 1, 1, 1), nrow=3, ncol=2)
-#' cacheSolve(makeCacheMatrix(x))
-#' 
-#' Singular input
+#' x_cached <- makeCacheMatrix(x)
+#' cacheSolve(x_cached)
+#'  
+#' Singular input:
 #' x <- matrix(c(0, 0, 0, 0, 0, 1, 1, 1, 1), nrow=3, ncol=3)
-#' cacheSolve(makeCacheMatrix(x))
+#' x_cached <- makeCacheMatrix(x)
+#' cacheSolve(x_cached)
+#' 
 #' @return matrix{base}
 cacheSolve <- function(x, ...) {
     ## Return a matrix that is the inverse of 'x'
@@ -80,16 +84,19 @@ cacheSolve <- function(x, ...) {
     if( nrow != ncol )
         stop("Not a square matrix!") # a rectangular matrix is non-invertible
     
+    print(is.null(inv))
+    
     if(is.null(inv)){
-        if(is.singular.matrix(x$get())) {
+        if(is.singular.matrix(data)) {
             warning("Matrix is degenerate! Pseudoinverse has been computed!")
             inv <-pseudoinverse(data)
         } else {
             inv <- solve(data, ...)
         }
         x$setInverse(inv)
+        
     } else {
         message("getting cached data")
     }
-    inv
+    return(inv)
 }
