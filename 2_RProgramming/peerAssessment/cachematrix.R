@@ -84,8 +84,6 @@ cacheSolve <- function(x, ...) {
     if( nrow != ncol )
         stop("Not a square matrix!") # a rectangular matrix is non-invertible
     
-    print(is.null(inv))
-    
     if(is.null(inv)){
         if(is.singular.matrix(data)) {
             warning("Matrix is degenerate! Pseudoinverse has been computed!")
