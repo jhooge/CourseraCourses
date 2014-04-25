@@ -13,7 +13,7 @@ require(reshape2)
 #' 
 #' @details
 #' \code{mergeData} expects the training and test data in dataframes. This
-#' includes the response as well as the subject vector. The function 
+#' includes the response as well as the subject vector and activity labels.
 #' 
 #' @param XTrain A [k x n] data frame of training data.
 #' @param XTest A [l x n] data frame of test data.
@@ -21,7 +21,7 @@ require(reshape2)
 #' @param yTest A [l x 1] data frame representing a slice of the test response vector.
 #' @param subjectsTrain A [k x 1] data frame representing a slice of subjects used for training.
 #' @param subjectsTest A [l x 1] data frame representing a slice of subjects used for testing.
-#' @param labels A [s x 1] data frame representing a the vector of numeric activity labels
+#' @param labels A [6 x 2] data frame representing the mapping of numeric and human readable activity labels.
 #' 
 #' @return data.frame {base} 
 mergeData <- function(XTrain, XTest,
