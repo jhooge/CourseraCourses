@@ -3,8 +3,8 @@ require(dplyr)
 require(data.table)
 require(reshape2)
 
-#' The following functions enable so called "caching" of the inverse of a
-#' square matrix.
+#' 
+#' 
 #' @author Jens Hooge jens.hooge@gmail.com
 
 #' @title Merging Training and Test Data.
@@ -12,18 +12,22 @@ require(reshape2)
 #' @description \code{mergeData} Merges test and training data.
 #' 
 #' @details
-#' \code{mergeData} expects the training and test data in dataframes. This
-#' includes the response as well as the subject vector and activity labels.
+#' \code{mergeData} merges the training- and test datafames for later analysis.
+#' This includes the response as well as the subject vector and activity labels.
+#' Let k be the number of training examples, l the number of test examples and
+#' m the number of features. The function merges the data in a [(k+l), m+2]
+#' dataframe. It combines the training and test data and contains the numeric
+#' subject and activity labels in the its first two columns.
 #' 
-#' @param XTrain A [k x n] data frame of training data.
-#' @param XTest A [l x n] data frame of test data.
+#' @param XTrain A [k x m] data frame of training data.
+#' @param XTest A [l x m] data frame of test data.
 #' @param yTrain A [k x 1] data frame representing a slice of the training response vector .
 #' @param yTest A [l x 1] data frame representing a slice of the test response vector.
 #' @param subjectsTrain A [k x 1] data frame representing a slice of subjects used for training.
 #' @param subjectsTest A [l x 1] data frame representing a slice of subjects used for testing.
 #' @param labels A [6 x 2] data frame representing the mapping of numeric and human readable activity labels.
 #' 
-#' @return data.frame {base} 
+#' @return data.frame {base}
 mergeData <- function(XTrain, XTest,
                       yTrain, yTest,
                       subjectsTrain, subjectsTest,
@@ -38,6 +42,21 @@ mergeData <- function(XTrain, XTest,
     return(X)
 }
 
+#' @title Extraction of columns in data frame which contain means and standard deviations.
+#' 
+#' @description \code{extractCols} extracts columns containing means and standard deviations.
+#' 
+#' @details
+#' \code{extractCols} is a helper function for \code{run_analysis}, which removes the
+#' the characters "(", ")" and replaces "," and "-" with underscores, from the
+#' identifiers in the feature vector. It then extracts all columns from df with
+#' a column name that contain the words "subject", "activity label", "Mean",
+#' "mean" and "std" and returns it.
+#' 
+#' @param df A data frame which includes test- and training data as well as the subject and activity label vector.
+#' @param features A data frame of feature lables.
+#' 
+#' @return data.frame {base}
 extractCols <- function(df, features) {
     colnames(df)[1] <- "subject"
     colnames(df)[2] <- "activity_label"
@@ -51,6 +70,19 @@ extractCols <- function(df, features) {
     return(df[columnNames])
 }
 
+#' @title Reshapes a preprocessed data frame
+#' 
+#' @description \code{reformat} extracts columns containing means and standard deviations.
+#' 
+#' @details
+#' \code{extractCols}  is a helper function for \code{run_analysis}. It splits 
+#' the data set by subject and activity labels, applies the mean function to 
+#' each to variable for each activity and each subject and returns the resulting
+#' data frame.
+#' 
+#' @param df A data frame which includes test- and training data as well as the subject and activity label vector.
+#' 
+#' @return data.frame {base}
 reformat <- function(df) {
     df <- melt(df, id.vars=c("subject", "activity_label"))
     df <- aggregate(value~subject+activity_label+variable, data=df, mean)
@@ -58,6 +90,17 @@ reformat <- function(df) {
     return(df)
 }
 
+#' @title Generation of a tidy dataset.
+#' 
+#' @description \code{run_analysis} reads the raw data files from the UCI Dataset and calls its helper functions to generate a tidy dataset.
+#' 
+#' @details
+#' \code{run_analysis} is the actual main-function of this module, which uses 
+#' \code{mergeData}, \code{extractCols} and \code{reformat} to generate a clean
+#' dataset for further analysis, writes it to a csv-File called 
+#' "tidy_dataset.txt" and returns the resulting data frame.
+#' 
+#' @return data.frame {base}
 run_analysis <- function() {
     features <- read.csv("./UCI_HAR_Dataset/features.txt", 
                          sep="", header=FALSE)
