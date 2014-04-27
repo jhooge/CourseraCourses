@@ -12,6 +12,8 @@ The script run_analysis.R performs the following steps:
     <li>Averaging of each variable for each activity and each subject.</li>
 <ol>
 
+The script uses the three helper functions mergeData, extractCols and reformat to encapsulate its preprocessing steps in the following order.
+
 <h2>Merging Training and Test Data</h2>
 Let k be the number of training examples, l the number of test examples and m the number of features. Then the data will be merged in a [(k+l), m+2] dataframe. This dataframe combines the training and test data and contains the numeric subject and activity labels in the its first two columns.
 
