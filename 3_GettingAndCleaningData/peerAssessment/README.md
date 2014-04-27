@@ -10,7 +10,7 @@ The script run_analysis.R performs the following steps:
     <li>Labeling each row of the dataset by human-readable activity labels.</li>
     <li>Labeling each column by human-readable feature labels</li>
     <li>Averaging of each variable for each activity and each subject.</li>
-<ol>
+</ol>
 
 The script uses the three helper functions mergeData, extractCols and reformat to encapsulate its preprocessing steps in the following order.
 
