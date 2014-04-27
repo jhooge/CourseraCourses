@@ -1,6 +1,6 @@
 <h1>The Code Book</h1>
 
-This Codebook describes the data transformations which have been performed to process the raw data for further analysis. For information about the raw data, authors of the original data set and experimental setup, please refer to [Human Activity Recognition Using Smartphones Data Set](http://archive.ics.uci.edu/ml/datasets/Human+Activity+Recognition+Using+Smartphones "Human Activity Recognition Using Smartphones Data Set")
+This Codebook describes the data transformations which have been performed to process the raw data for further analysis. For information about the raw data, authors of the original data set and experimental setup, please refer to [Human Activity Recognition Using Smartphones Data Set](http://archive.ics.uci.edu/ml/datasets/Human+Activity+Recognition+Using+Smartphones "Human Activity Recognition Using Smartphones Data Set").
 
 <h2>Data Transformations</h2>
 
