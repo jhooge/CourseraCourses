@@ -12,12 +12,12 @@ The script run_analysis.R performs the following steps:
     <li>Averaging of each variable for each activity and each subject.</li>
 <ol>
 
-<h2>Merging Training and Test Data</h1>
+<h2>Merging Training and Test Data</h2>
 Let k be the number of training examples, l the number of test examples and m the number of features. Then the data will be merged in a [(k+l), m+2] dataframe. This dataframe combines the training and test data and contains the numeric subject and activity labels in the its first two columns.
 
-<h2>Feature Extraction</h1>
+<h2>Feature Extraction</h2>
 From the identifiers in the feature vector, the characters "(", ")" are removed, while the characters "," and "-"  are replaced with underscores. After this preprocessing step all features with names containing the words "subject", "activity label", "Mean", "mean" and "std" are extracted.
 
-<h2>Grouping and Averaging</h1>
+<h2>Grouping and Averaging</h2>
 The dataset is stacked vertically and the grouped by subject and activity labels. After that the mean function is applied to each variable and activity for each subject.
 
