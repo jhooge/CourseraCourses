@@ -72,10 +72,10 @@ extractCols <- function(df, features) {
 
 #' @title Reshapes a preprocessed data frame
 #' 
-#' @description \code{reformat} extracts columns containing means and standard deviations.
+#' @description \code{reformat} groups the data by subject and activity labels.
 #' 
 #' @details
-#' \code{extractCols}  is a helper function for \code{run_analysis}. It splits 
+#' \code{extractCols}  is a helper function for \code{run_analysis}. It groups 
 #' the data set by subject and activity labels, applies the mean function to 
 #' each to variable for each activity and each subject and returns the resulting
 #' data frame.
