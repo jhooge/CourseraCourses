@@ -7,6 +7,5 @@ plot3 <- function(data, destfile) {
   lines(data$Date, data$Sub_metering_3, type="l", col="blue")
   legend("topright", lty=1, col=c("black", "red", "blue"), 
          legend=colnames(data[6:8]))
-#   dev.copy(png, file = destfile)
   dev.off()
 }

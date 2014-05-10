@@ -6,6 +6,5 @@ plot1 <- function(data, destfile) {
        xlab="Global Active Power (kilowatts)", 
        xlim=c(0,6),
        ylim=c(0,1200))
-#   dev.copy(png, file = destfile)
   dev.off()
 }

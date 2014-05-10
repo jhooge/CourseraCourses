@@ -4,6 +4,5 @@ plot2 <- function(data, destfile) {
   plot(data$Date, data$Global_active_power, 
        type="l", 
        xlab="", ylab="Global Active Power (kilowatts)")
-#   dev.copy(png, file = destfile)
   dev.off()
 }

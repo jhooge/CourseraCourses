@@ -19,6 +19,5 @@ plot4 <- function(data, destfile) {
        ylim=c(0,0.5),
        xlab="datetime", ylab="Global_reactive_power")
   
-#   dev.copy(png, file = destfile)
   dev.off()
 }
