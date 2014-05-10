@@ -6,7 +6,9 @@ source("plot3.R")
 source("plot4.R")
 
 #' Merges the fist two columns of the input data frame
-#' to a POSIX Date object.
+#' to a POSIX Date object and subsets the input data for 
+#' consumptions between 1/2/2007 - 2/2/2007. It also takes care
+#' of correctly casting each column to its correct data type. 
 #' 
 #' @param data A data frame representing household power consumption data.
 #' 

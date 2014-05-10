@@ -1,1 +1,7 @@
-setfwpwd.R
+.Rproj
+.Rproj.user
+.Rdata
+.Rhistory
+
+# ignore large data file
+household_power_consumption.txt
