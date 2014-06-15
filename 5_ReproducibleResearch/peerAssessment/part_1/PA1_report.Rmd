@@ -59,7 +59,7 @@ mean(stepsPerDay$steps, na.rm=TRUE)
 median(stepsPerDay$steps, na.rm=TRUE)
 ```
 This is more realistic and the individual looks a lot more active than before. To get a better idea about how active the individual really was, let's look at the distribution of steps over time. Since yellow and blue is the new green and red, we do so by plotting a colorblind-friendly histogram of the data.
-```{r fig.width=6, fig.height=4, fig.align='center'}
+```{r fig1_activityMonitoring, fig.width=6, fig.height=4, fig.align='center'}
 fig1 <- ggplot(stepsPerDay, aes(x=date, y=steps)) + 
             geom_histogram(stat="identity", 
                            binwidth=nrow(stepsPerDay), 
@@ -97,7 +97,7 @@ After that we convert the interval column back to a numeric variable, to avoid p
 timeSeriesData$interval <- as.numeric(levels(timeSeriesData$interval))[timeSeriesData$interval]
 ```
 Finally we can plot the Average Daily Activity Pattern:
-```{r fig.width=6, fig.height=4, fig.align='center'}
+```{r fig2_timeSeries, fig.width=6, fig.height=4, fig.align='center'}
 maxID <- which.max(timeSeriesData$steps)
 
 fig2 <- ggplot(timeSeriesData, aes(x=interval, y=steps)) + 
@@ -160,7 +160,7 @@ In case of our anaylsis we want to get an idea about the level of activity per d
 
 The following is basically the same analysis than before, but with the missing values in the original dataset, replaced by the mean of the number of steps In the following two figures we can see how the imputed values are integrated into the dataset.
 
-```{r fig.width=6, fig.height=4, fig.align='center'}
+```{r fig3_stepsPerDayImputed, fig.width=6, fig.height=4, fig.align='center'}
 dataImputed <- data
 estimator <- mean(dataImputed$steps, na.rm=TRUE)
 dataImputed$steps[selectNA] <- estimator
@@ -200,7 +200,7 @@ summary(stepsPerDay)
 summary(stepsPerDayImputed)
 ```
 So we can see that the imputation had almost no effect on the mean and median, but how did the distribution of steps change? THe answer lies in the comparison of the distributions, before and after the imputation.
-```{r fig.width=6, fig.height=4, fig.align='center'}
+```{r fig4_densityPlot, fig.width=6, fig.height=4, fig.align='center'}
 fig4 <- ggplot() +  
             geom_density(data=stepsPerDay, aes(x=steps, 
                                                y=..density..,
@@ -244,7 +244,7 @@ timeSeriesDataImputed$interval <- as.numeric(levels(timeSeriesDataImputed$interv
 ```
 After these preprocessing steps, plotting the facetted time series was straight forward:
 
-```{r fig.width=6, fig.height=6, fig.align='center'}
+```{r fig5_timeSeriesImputed, fig.width=6, fig.height=6, fig.align='center'}
 fig5 <- ggplot(timeSeriesDataImputed, aes(interval, steps)) + 
         geom_line() +
         geom_smooth(method="loess") +

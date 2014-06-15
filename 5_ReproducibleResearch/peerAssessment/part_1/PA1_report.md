@@ -27,7 +27,7 @@ Show any code that is needed to
 
 2. Process/transform the data (if necessary) into a format suitable for your analysis
 
-**Please note that it is expected that the dataset has been downloaded and unpacked in the current working directory.**
+**Please note that it is expected that the dataset has been downloaded and unpacked in a directory called "data" in the current working directory**
 
 Dataset: [Activity monitoring data][5]
 
@@ -118,7 +118,7 @@ fig1 <- ggplot(stepsPerDay, aes(x=date, y=steps)) +
 fig1
 ```
 
-<img src="figure/unnamed-chunk-6.svg" title="plot of chunk unnamed-chunk-6" alt="plot of chunk unnamed-chunk-6" style="display: block; margin: auto;" />
+<img src="figure/fig1_activityMonitoring.svg" title="plot of chunk fig1_activityMonitoring" alt="plot of chunk fig1_activityMonitoring" style="display: block; margin: auto;" />
 ## What is the average daily activity pattern?
 
 1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
@@ -165,7 +165,7 @@ fig2
 ## Warning: Removed 6 rows containing missing values (geom_path).
 ```
 
-<img src="figure/unnamed-chunk-9.svg" title="plot of chunk unnamed-chunk-9" alt="plot of chunk unnamed-chunk-9" style="display: block; margin: auto;" />
+<img src="figure/fig2_timeSeries.svg" title="plot of chunk fig2_timeSeries" alt="plot of chunk fig2_timeSeries" style="display: block; margin: auto;" />
 
 The **maximum number of steps** and their corresponding 5 minute interval, as indicated in the above figure can be extracted from the data frame as follows:
 
@@ -258,7 +258,7 @@ fig3 <- ggplot(stepsPerDayImputed, aes(x=date, y=steps)) +
 fig3
 ```
 
-<img src="figure/unnamed-chunk-12.svg" title="plot of chunk unnamed-chunk-12" alt="plot of chunk unnamed-chunk-12" style="display: block; margin: auto;" />
+<img src="figure/fig3_stepsPerDayImputed.svg" title="plot of chunk fig3_stepsPerDayImputed" alt="plot of chunk fig3_stepsPerDayImputed" style="display: block; margin: auto;" />
 
 The number of steps have been imputed for the following dates:
 
@@ -323,7 +323,7 @@ fig4
 ## Warning: Removed 8 rows containing non-finite values (stat_density).
 ```
 
-<img src="figure/unnamed-chunk-15.svg" title="plot of chunk unnamed-chunk-15" alt="plot of chunk unnamed-chunk-15" style="display: block; margin: auto;" />
+<img src="figure/fig4_densityPlot.svg" title="plot of chunk fig4_densityPlot" alt="plot of chunk fig4_densityPlot" style="display: block; margin: auto;" />
 
 We can see that the values are approximately normal distributed and that the distribution with the imputed values is slightly sharper. This is result of an increased density around the mean value, because we replaced 2304 missing values with the mean value of the original data. By doing that we didn't change the general truth about the data, or in other words we did not introduce a shift on the x-axis of the whole distribution. However we implicitly added certainty, that the model, constructed by our sample, is correctly distributed around this mean. It is worth mentioning that this assumption is not neccessarily correct, especially if the sample size is small. Therefore it is important to identify the reasons for how and why missing values are occuring.
 
@@ -368,7 +368,7 @@ fig5 <- ggplot(timeSeriesDataImputed, aes(interval, steps)) +
 fig5
 ```
 
-<img src="figure/unnamed-chunk-18.svg" title="plot of chunk unnamed-chunk-18" alt="plot of chunk unnamed-chunk-18" style="display: block; margin: auto;" />
+<img src="figure/fig5_timeSeriesImputed.svg" title="plot of chunk fig5_timeSeriesImputed" alt="plot of chunk fig5_timeSeriesImputed" style="display: block; margin: auto;" />
 
 The figure above shows a higher activity profile over the entire day during the weekend, compared to weekdays. The highest activity level can be seen between 8 and 10 in the morning, which during the weekdays could be explained by the fact, that the individual might have walked to work. 
 
