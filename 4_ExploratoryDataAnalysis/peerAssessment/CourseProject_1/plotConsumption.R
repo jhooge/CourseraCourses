@@ -51,15 +51,14 @@ plotAll <- function(directory) {
   data <- reformatDates(data)
   
   print("Generating figure plot1.png")
-  plot1(data, paste(directory, "plot1.png", sep="/"))
+  plot1(data, paste(directory, "plot1_1.png", sep="/"))
   print("Generating figure plot2.png")
-  plot2(data, paste(directory, "plot2.png", sep="/"))
+  plot2(data, paste(directory, "plot2_1.png", sep="/"))
   print("Generating figure plot3.png")
-  plot3(data, paste(directory, "plot3.png", sep="/"))
+  plot3(data, paste(directory, "plot3_1.png", sep="/"))
   print("Generating figure plot4.png")
-  plot4(data, paste(directory, "plot4.png", sep="/"))
+  plot4(data, paste(directory, "plot4_1.png", sep="/"))
   print("DONE")
-  
 }
 
 plotAll("myfigures/")

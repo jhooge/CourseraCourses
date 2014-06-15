@@ -1,0 +1,267 @@
+Peer Assessment 1: Reproducible Research
+========================================================
+
+## Introduction
+
+It is now possible to collect a large amount of data about personal movement using activity monitoring devices such as a Fitbit, Nike Fuelband, or Jawbone Up. These type of devices are part of the "quantified self"" movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. But these data remain under-utilized both because the raw data are hard to obtain and there is a lack of statistical methods and software for processing and interpreting the data.
+
+This assignment makes use of data from a personal activity monitoring device. This device collects data at 5 minute intervals through out the day. The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
+
+## Load the required libraries
+```{r}
+library(ggplot2)   ## creating ggplots
+library(scales)    ## pretty date formats
+library(gridExtra) ## arrange ggplots
+```
+
+## Loading and preprocessing the data
+
+Show any code that is needed to
+
+1. Load the data (i.e. read.csv())
+
+2. Process/transform the data (if necessary) into a format suitable for your analysis
+
+**Please note that it is expected that the dataset has been downloaded and unpacked in a directory called "data" in the current working directory**
+
+Dataset: [Activity monitoring data][5]
+
+The data will be loaded using the read.csv function. 
+```{r}
+data <- read.csv(file="data//activity.csv")
+str(data)
+```
+Because the date column is a factor variable, I will convert it to the POSIX Date 
+format, as it is more convenient for plotting as well as subsetting the
+data. to get a general idea about the data let's look at the summary.
+```{r}
+data$date <- as.Date(data$date)
+summary(data)
+```
+Here we can see that measurements have been taken over an interval between 1 Oct and 30 Nov. The number of steps have been recorded in 5 minute intervals, resulting in 288 observations per day. There is something wrong however. The average number of steps seems much to low. I fact the average number of step for a US american man is about 7192 steps per day ([Le Masurier et al., 2004][1], [Tudor-Locke et al., 2004][2]). A mean of 37.38 steps and a maximum number of steps of 806, would indicate that the individual in our case barely had moved at all. The reason for this result is, that the measurements have not yet been summed up by day, so let's do this.
+```{r}
+stepsPerDay <- as.data.frame(rowsum(data$steps, data$date))
+stepsPerDay$date <- as.Date(rownames(stepsPerDay))
+rownames(stepsPerDay) <- NULL
+colnames(stepsPerDay) <- c("steps", "date")
+```
+## What is mean total number of steps taken per day?
+
+For this part of the assignment, you can ignore the missing values in the dataset.
+
+1. Make a histogram of the total number of steps taken each day
+
+2. Calculate and report the mean and median total number of steps taken per day
+
+Now that the data has been properly preprocessed, we have a look at the mean and median again.
+```{r}
+mean(stepsPerDay$steps, na.rm=TRUE)
+median(stepsPerDay$steps, na.rm=TRUE)
+```
+This is more realistic and the individual looks a lot more active than before. To get a better idea about how active the individual really was, let's look at the distribution of steps over time. Since yellow and blue is the new green and red, we do so by plotting a colorblind-friendly histogram of the data.
+```{r fig.width=6, fig.height=4, fig.align='center'}
+fig1 <- ggplot(stepsPerDay, aes(x=date, y=steps)) + 
+            geom_histogram(stat="identity", 
+                           binwidth=nrow(stepsPerDay), 
+                           position="identity",
+                           aes(fill=steps,)) +
+            scale_fill_gradient("steps", low = "yellow", high = "blue") +
+            scale_x_date(labels = date_format("%Y-%m-%d"),
+                         breaks = seq(min(stepsPerDay$date), 
+                                      max(stepsPerDay$date), 
+                                      length=ceiling(nrow(stepsPerDay)/2)),
+                         limits = c(min(stepsPerDay$date), 
+                                    max(stepsPerDay$date))) +
+            labs(title = "Activity Monitoring") +
+            labs(x = "Date", y = "Number of Steps") +
+            theme_bw() + 
+            theme(axis.text.x = element_text(angle = 90, hjust = 1))
+fig1
+```
+## What is the average daily activity pattern?
+
+1. Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
+
+2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+
+First we will extract the steps and interval columns from the original data frame and convert the interval column to a factor variable. This will make it possible to split the data frame into interval groups and compute the average number of steps for each interval group per day.
+```{r}
+timeSeriesData <- data.frame(steps=data$steps,
+                             interval=data$interval)
+timeSeriesData$interval <- as.factor(timeSeriesData$interval)
+
+timeSeriesData <- aggregate(steps ~ interval, timeSeriesData, mean)
+```
+After that we convert the interval column back to a numeric variable, to avoid problems with  the ggplot aesthetics function. To transform a factor f to approximately its original numeric values, as.numeric(levels(f))[f] is recommended and slightly more efficient than as.numeric(as.character(f))
+```{r}
+timeSeriesData$interval <- as.numeric(levels(timeSeriesData$interval))[timeSeriesData$interval]
+```
+Finally we can plot the Average Daily Activity Pattern:
+```{r fig.width=6, fig.height=4, fig.align='center'}
+maxID <- which.max(timeSeriesData$steps)
+
+fig2 <- ggplot(timeSeriesData, aes(x=interval, y=steps)) + 
+            geom_line() +
+            geom_smooth(method="loess") +
+            geom_text(data=timeSeriesData[maxID, ], 
+                      label=sprintf("(%i, %.2f)", 
+                                    timeSeriesData[maxID,]$interval, 
+                                    timeSeriesData[maxID,]$steps),
+                      size=3.4, 
+                      vjust=-1,) +
+            scale_y_continuous(limits = c(-5, 250)) +
+            labs(title = "Average Daily Activity Pattern") +
+            labs(x = "5-Minute Interval", 
+                 y = "Number of Steps") +
+            theme_bw()
+fig2
+```
+
+The **maximum number of steps** and their corresponding 5 minute interval, as indicated in the above figure can be extracted from the data frame as follows:
+```{r}
+timeSeriesData[maxID,]
+```
+
+## Imputing missing values
+
+Note that there are a number of days/intervals where there are missing values (coded as NA). The presence of missing days may introduce bias into some calculations or summaries of the data.
+
+1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
+
+2. Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.
+
+3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
+
+4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+
+To get an idea about how many values ar missing we will generate a logical vector, which is 1 if the step measurements had been missing and 0 otherwise. Summing over this vector then results in the number of missing values in the original dataset, while the logical vector can be used as a bit mask to select missing/non-missing values.
+```{r}
+selectNA <- !complete.cases(data$steps)
+selectZero <- data$steps == 0 
+print(sprintf("No. of NA values: %i", sum(selectNA)))
+print(sprintf("No. of zero values: %i", sum(selectZero, na.rm=TRUE)))
+```
+There are several methods for treating missing data available in the literature. Many of
+these methods, such as case substitution, were developed for dealing with missing data
+in sample surveys, and have some drawbacks when applied to the Data Mining context.
+Other methods, such as replacement of missing values by the attribute mean or mode,
+are very naive and should be carefully used to avoid insertion of bias. In a general way, missing data treatment methods can be divided into three categories, as proposed in [Little & Rubin, 2002][3]:
+
+1. Ignoring and discarding data. 
+There are two main ways to discard data with missing values. The first one is known as complete case analysis, it is available in all statistical programs and is the default method in many programs. This method consists of discarding all instances (cases) with missing data. The second method is known as discarding instances and/or attributes. This method consists of determining the extent of missing data on each instance and attribute, and delete the instances and/or attributes with high levels of missing data. Before deleting any attribute, it is necessary to evaluate its relevance to the analysis. Unfortunately, relevant attributes should be kept even with a high degree of missing values. Both methods, complete case analysis and discarding instances and/or attributes, should be applied only if missing data are MCAR (*Missing Completely at Random*), because missing data that are not MCAR have non-random elements that can bias the results;
+
+2. Parameter estimation.
+Maximum likelihood procedures are used to estimate the parameters of a model defined for the complete data. Maximum likelihood procedures that use variants of the Expectation-Maximization algorithm [Dempster et al., 1977][4] can handle parameter estimation in the presence of missing data;
+
+3. Imputation.
+Imputation is a class of procedures that aims to fill in the missing values with estimated ones. The objective is to employ known relationships that can be identified in the valid values of the data set to assist in estimating the missing values.
+
+In case of our anaylsis we want to get an idea about the level of activity per day of the individual in question. The activity of the individual is measured by the sum of steps per day in 5 minute intervals. Naturally the individual wasn't moving in every 5 minute interval, which explains the high number of zero values. By summing over the intervals these zero values have no effect on the downstream analysis. What about the NA values however? We don't really know anything about the reasons whether these values are *missing structurally*, possibly because the individual was sick or overtrained, or whether the missing values are a result of a malfunctioning measurement device. The latter case would imply an *uninformative missingness*, such that these values could simply be replaced by a naive measure like the mean of the number of steps on this day, or any other way of imputation, keeping the introduced bias to a minimum. Imputing the values in the former case however, would introduce a bias, because the state of health of the individual, would not imply that he or she would have a comparable perfomance level during these times. Unfortunately we can't ask the individual and the course material provides no additional information about the experimental setup than the description on the peer assessment page. For the sake of the argument, let's assume that the missing values are a result of a malfunctioning measurement device. We can then savely impute the missing values, by computing the mean. 
+
+The following is basically the same analysis than before, but with the missing values in the original dataset, replaced by the mean of the number of steps In the following two figures we can see how the imputed values are integrated into the dataset.
+
+```{r fig.width=6, fig.height=4, fig.align='center'}
+dataImputed <- data
+estimator <- mean(dataImputed$steps, na.rm=TRUE)
+dataImputed$steps[selectNA] <- estimator
+
+stepsPerDayImputed <- as.data.frame(rowsum(dataImputed$steps, dataImputed$date))
+stepsPerDayImputed$date <- as.Date(rownames(stepsPerDayImputed))
+rownames(stepsPerDayImputed) <- NULL
+colnames(stepsPerDayImputed) <- c("steps", "date")
+
+fig3 <- ggplot(stepsPerDayImputed, aes(x=date, y=steps)) + 
+            geom_histogram(stat="identity", 
+                           binwidth=nrow(stepsPerDayImputed), 
+                           position="identity",
+                           aes(fill=steps,)) +
+            scale_fill_gradient("steps", low = "yellow", high = "blue") +
+            scale_x_date(labels = date_format("%Y-%m-%d"),
+                         breaks = seq(min(stepsPerDayImputed$date), 
+                                      max(stepsPerDayImputed$date), 
+                                      length=ceiling(nrow(stepsPerDayImputed)/2)),
+                         limits = c(min(stepsPerDayImputed$date), 
+                                    max(stepsPerDayImputed$date))) +
+            labs(title = "Activity Monitoring\n(Imputed on Original Data)") +
+            labs(x = "Date", y = "Number of Steps") +
+            theme_bw() + 
+            theme(axis.text.x = element_text(angle = 90, hjust = 1))
+fig3
+```
+
+The number of steps have been imputed for the following dates:
+```{r}
+unique(dataImputed$date[selectNA])
+```
+
+Let's compare the summary statistics between the original dataset and the imputed dataset. For interpretablity reasons the data has already been aggregated.
+```{r}
+summary(stepsPerDay)
+summary(stepsPerDayImputed)
+```
+So we can see that the imputation had almost no effect on the mean and median, but how did the distribution of steps change? THe answer lies in the comparison of the distributions, before and after the imputation.
+```{r fig.width=6, fig.height=4, fig.align='center'}
+fig4 <- ggplot() +  
+            geom_density(data=stepsPerDay, aes(x=steps, 
+                                               y=..density..,
+                                               color="original"),
+                         na.rm=TRUE) +
+            geom_density(data=stepsPerDayImputed, aes(x=steps,
+                                                      y=..density..,
+                                                      color="imputed")) +
+            scale_color_discrete(name ="Data", labels=c("imputed", "original")) +
+            labs(x="Number of Steps", y="Density") + 
+            labs(title="Density Plot of Steps per Day") +
+            theme_bw()
+fig4
+```
+
+We can see that the values are approximately normal distributed and that the distribution with the imputed values is slightly sharper. This is result of an increased density around the mean value, because we replaced `r sum(selectNA)` missing values with the mean value of the original data. By doing that we didn't change the general truth about the data, or in other words we did not introduce a shift on the x-axis of the whole distribution. However we implicitly added certainty, that the model, constructed by our sample, is correctly distributed around this mean. It is worth mentioning that this assumption is not neccessarily correct, especially if the sample size is small. Therefore it is important to identify the reasons for how and why missing values are occuring.
+
+## Are there differences in activity patterns between weekdays and weekends?
+
+For this part the weekdays() function may be of some help here. Use the dataset with the filled-in missing values for this part.
+
+1. Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
+
+2. Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
+
+First we will use the data set with the imputed values to generate time series data frame.
+```{r}
+timeSeriesDataImputed <- dataImputed
+timeSeriesDataImputed$interval <- as.factor(timeSeriesDataImputed$interval)
+```
+We will generate a logical vector indicating whether data sample has been recorded on a weekday or on the weekend. This will then be converted to a categorial column and added to the time series data frame. After that we will aggregate the data frame and reconvert the categorial interval variable to a numeric variable.
+```{r}
+day <- !weekdays(timeSeriesDataImputed$date) %in% c("Saturday", "Sunday")
+day[day == TRUE] <- "weekday"
+day[day == FALSE] <- "weekend"
+day <- as.factor(day)
+
+timeSeriesDataImputed$day <- day
+timeSeriesDataImputed <- aggregate(steps ~ interval + day, timeSeriesDataImputed, mean)
+timeSeriesDataImputed$interval <- as.numeric(levels(timeSeriesDataImputed$interval))[timeSeriesDataImputed$interval]
+```
+After these preprocessing steps, plotting the facetted time series was straight forward:
+
+```{r fig.width=6, fig.height=6, fig.align='center'}
+fig5 <- ggplot(timeSeriesDataImputed, aes(interval, steps)) + 
+        geom_line() +
+        geom_smooth(method="loess") +
+        facet_grid(day ~ .) +
+        labs(x="5-Minute Interval", 
+             y="Density") + 
+        labs(title="Average Daily Activity Patterns\n Divided by Weekdays and Weekend") +
+        theme_bw()
+fig5
+```
+
+The figure above shows a higher activity profile over the entire day during the weekend, compared to weekdays. The highest activity level can be seen between 8 and 10 in the morning, which during the weekdays could be explained by the fact, that the individual might have walked to work. 
+
+
+[1]: http://www.ncbi.nlm.nih.gov/pubmed/15126728 "Le Masurier et al., 2004"
+[2]: http://www.ncbi.nlm.nih.gov/pubmed/14715035 "Tudor-Locke et al., 2004"
+[3]: http://eu.wiley.com/WileyCDA/WileyTitle/productCd-0471183865.html "Little & Rubin, 2002"
+[4]: http://web.mit.edu/6.435/www/Dempster77.pdf "Dempster et al., 1977"
+[5]: https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip "Activity monitoring data"
+
