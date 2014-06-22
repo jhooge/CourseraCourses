@@ -4,4 +4,4 @@
 .Rhistory
 
 # ignore large data file
-household_power_consumption.txt
+*.txt
