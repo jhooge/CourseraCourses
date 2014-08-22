@@ -8,7 +8,7 @@ This repository includes code for the Coursera courses
 ## Data Science Specialization
 
 - [The Data Scientist’s Toolbox - Johns Hopkins University](https://www.coursera.org/course/datascitoolbox)
-- [R Programming - Johns Hopkins University](https://www.coursera.org/course/rprogs://www.coursera.org/course/rprogersity]()
+- [R Programming - Johns Hopkins University](https://www.coursera.org/course/rprogs)
 - [Getting and Cleaning Data](https://www.coursera.org/course/getdata)
 - [Exploratory Data Analysis -  Johns Hopkins University](https://www.coursera.org/course/exdata)
 - [Reproducible Research - Johns Hopkins University](https://www.coursera.org/course/repdata)
