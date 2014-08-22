@@ -3,13 +3,13 @@ Coursera Courses
 
 This repository includes code for the Coursera courses
 
-- [Machine Learning - Stanford University](https://www.coursera.org/course/ml) 
+- [Machine Learning](https://www.coursera.org/course/ml) - Stanford University
 
 ## Data Science Specialization
 
-- [The Data Scientist’s Toolbox - Johns Hopkins University](https://www.coursera.org/course/datascitoolbox)
-- [R Programming - Johns Hopkins University](https://www.coursera.org/course/rprogs)
-- [Getting and Cleaning Data](https://www.coursera.org/course/getdata)
-- [Exploratory Data Analysis -  Johns Hopkins University](https://www.coursera.org/course/exdata)
-- [Reproducible Research - Johns Hopkins University](https://www.coursera.org/course/repdata)
-- [Practical Machine Learning - Johns Hopkins University](https://www.coursera.org/course/predmachlearn)
+- [The Data Scientist’s Toolbox](https://www.coursera.org/course/datascitoolbox) - Johns Hopkins University
+- [R Programming](https://www.coursera.org/course/rprogs) - Johns Hopkins University
+- [Getting and Cleaning Data](https://www.coursera.org/course/getdata) - Johns Hopkins University
+- [Exploratory Data Analysis](https://www.coursera.org/course/exdata) - Johns Hopkins University
+- [Reproducible Research](https://www.coursera.org/course/repdata) - Johns Hopkins University
+- [Practical Machine Learning](https://www.coursera.org/course/predmachlearn) - Johns Hopkins University
