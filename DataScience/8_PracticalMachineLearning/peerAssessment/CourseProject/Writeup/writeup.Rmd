@@ -1,0 +1,82 @@
+Practical Machine Learning - Prediction Assignment Writeup
+========================================================
+```{r}
+library(caret)
+library(party)
+# library(doMC)
+# registerDoMC(32)
+library(doSNOW)
+cl <- makeCluster(4, type = "SOCK")
+registerDoSNOW(cl)
+```
+
+## Cleaning up the Data
+Let's read the data and get some idea about its size.
+```{r}
+testData <- read.csv("../data//pml-testing.csv", stringsAsFactors=TRUE)
+trainingData <- read.csv("../data//pml-training.csv", stringsAsFactors=TRUE)
+
+dim(testData)
+dim(trainingData)
+```
+Some of the columns are all NAs, because those might become a problem in the downstream analysis, they should be removed.
+```{r}
+removeNACols <- function(df) {
+  return(df[, colSums(is.na(df)) != nrow(df)])
+}
+
+testData <- removeNACols(testData)
+trainingData <- removeNACols(trainingData)
+
+dim(testData)
+dim(trainingData)
+```
+
+## Feature Selection
+Instead of using the correlation based feature selection algorithm by Mark Hall, proposed by the authors, I used elastic net to choose the most important features. (TODO: Give a proper reason here)
+```{r}
+# grid <- expand.grid(.mtry = seq(1,5,5))
+# trainedModels <- train(classe ~ ., data = trainingData,
+#                        method = "cforest",
+#                        controls = cforest_unbiased(ntree = 10))
+```
+
+## Preprocessing and Cross Validation
+```{r}
+ctrl <- trainControl(
+  method = "repeatedcv",  # cross-validation method
+  number = 10,            # number of folds
+  repeats = 10,           # number of complete sets of folds
+  allowParallel = TRUE)
+```
+
+## Training the Classifier
+```{r}
+set.seed(42)
+X <- trainingData[1:ncol(trainingData)-1]
+Y <- trainingData$classe
+grid <- expand.grid(.lambda = seq(0, 0.2, length=20),
+                     .alpha = 1)
+ptm <- proc.time()
+trainedModels <- train(X, Y,
+                       method = "glmnet",
+                       tuneGrid = grid,
+                       trControl = ctrl,
+                       preProc = c("center", "scale"),
+                       na.action=na.omit)
+t <- proc.time() - ptm
+```
+
+
+## Prediction on the Testset
+
+```{r}
+summary(cars)
+```
+
+You can also embed plots, for example:
+
+```{r fig.width=7, fig.height=6}
+plot(cars)
+```
+
