@@ -44,13 +44,17 @@ library(shiny)
 
 # Easiest way is to use runGitHub
 runGitHub(“CourseraCourses/DataScience/9_DevelopingDataProducts/MixtureModeling”, “jhooge”)
+
+# Run a tar or zip file directly
+runUrl(“https://github.com/CourseraCourses/DataScience/9_DevelopingDataProducts/MixtureModeling/archive/master.tar.gz”)
+runUrl(“https://github.com/CourseraCourses/DataScience/9_DevelopingDataProducts/MiCourseraCourses/DataScience/9_DevelopingDataProducts/MixtureModelingve/master.zip”)
 ```
 
 Or you can clone the git repository, then use `runApp()`:
 
 ```R
 # First clone the repository with git. If you have cloned it into
-# ~/MixtureModeling, first go to that directory, then use runApp().
+# ~/CourseraCourses/DataScience/9_DevelopingDataProducts/MixtureModeling, first go to that directory, then use runApp().
 setwd(“~/CourseraCourses/DataScience/9_DevelopingDataProducts/MixtureModeling”)
 runApp()
 ```
