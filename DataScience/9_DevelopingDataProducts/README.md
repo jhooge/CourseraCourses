@@ -43,7 +43,7 @@ However if you would like to run it in your own environment follow the instructi
 library(shiny)
 
 # Easiest way is to use runGitHub
-runGitHub(“CourseraCourses/DataScience/ß_DevelopingDataProducts/MixtureModeling”, “jhooge”)
+runGitHub(“CourseraCourses/DataScience/9_DevelopingDataProducts/MixtureModeling”, “jhooge”)
 ```
 
 Or you can clone the git repository, then use `runApp()`:
