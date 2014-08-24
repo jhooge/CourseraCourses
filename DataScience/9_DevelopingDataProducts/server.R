@@ -67,7 +67,8 @@ shinyServer(function(input, output) {
     })
     
     output$modelSummary <- renderPrint({
-        summary(model, data)
+#         summary(model, data)
+        model
     })
     
     output$covStructures <- renderDataTable({
