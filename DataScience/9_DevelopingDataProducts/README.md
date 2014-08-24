@@ -47,7 +47,7 @@ runGitHub(“CourseraCourses/DataScience/9_DevelopingDataProducts/MixtureModelin
 
 # Run a tar or zip file directly
 runUrl(“https://github.com/CourseraCourses/DataScience/9_DevelopingDataProducts/MixtureModeling/archive/master.tar.gz”)
-runUrl(“https://github.com/CourseraCourses/DataScience/9_DevelopingDataProducts/MiCourseraCourses/DataScience/9_DevelopingDataProducts/MixtureModelingve/master.zip”)
+runUrl(“https://github.com/CourseraCourses/DataScience/9_DevelopingDataProducts/MixtureModeling/archive/master.zip”)
 ```
 
 Or you can clone the git repository, then use `runApp()`:
