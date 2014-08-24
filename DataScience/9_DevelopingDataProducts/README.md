@@ -1,5 +1,7 @@
 # Normal Mixture Modeling for Model-Based Clustering
 
+![](images/shinyApp.png?raw=true)
+
 This shiny app has been created as part of the Coursera Course \”Developing Data Products\”. 
 It uses Mixtures of Gaussians for a Model Based Cluster analysis of the Pima Indian Diabetes Database. 
 Up to ten components can be chosen for the mixtures. The supervised classification result, together 
