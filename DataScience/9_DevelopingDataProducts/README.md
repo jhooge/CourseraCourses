@@ -1,6 +1,6 @@
 ![](images/shinyApp.png?raw=true)
 
-This shiny app has been created as part of the Coursera Course \”Developing Data Products\”. 
+This shiny app has been created as part of the Coursera Course “Developing Data Products”. 
 It uses Mixtures of Gaussians for a Model Based Cluster analysis of the Pima Indian Diabetes Database. 
 Up to ten components can be chosen for the mixtures. The supervised classification result, together 
 with classification uncertainty and errors can be observed in 2D projections of the feature space. 
@@ -33,6 +33,27 @@ The database has n=768 patients each with numeric variables.
     <li>age</li>
     <li>diabetes onset within 5 years (0, 1)</li>
 </ul>
+
+## Usage
+
+This app is hosted on [shinyapps.io](http://jhooge.shinyapps.io/MixtureModeling/).
+However if you would like to run it in your own environment follow the instructions below.
+
+```R
+library(shiny)
+
+# Easiest way is to use runGitHub
+runGitHub(“CourseraCourses/DataScience/ß_DevelopingDataProducts/MixtureModeling”, “jhooge”)
+```
+
+Or you can clone the git repository, then use `runApp()`:
+
+```R
+# First clone the repository with git. If you have cloned it into
+# ~/MixtureModeling, first go to that directory, then use runApp().
+setwd(“~/CourseraCourses/DataScience/9_DevelopingDataProducts/MixtureModeling”)
+runApp()
+```
 
 ## Acknowledgements
 
