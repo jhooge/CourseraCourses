@@ -4,10 +4,9 @@ library(mlbench)
 data(PimaIndiansDiabetes2)
 
 data <- PimaIndiansDiabetes2
+data <- data[complete.cases(data), ]
 response <- data[,9]
-
-preProc <- preProcess(data[,-9], method=c("knnImpute"))
-data <- predict(preProc, data[,-9])
+data <- data[,-9]
 
 # data <- iris[,-5]
 # data <- rbind(solTrainX, solTestX)

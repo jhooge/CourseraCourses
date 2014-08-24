@@ -1,5 +1,6 @@
 library(shiny)
 library(mlbench)
+library(mclust)
 library(caret)
 
 data(PimaIndiansDiabetes2)
@@ -9,10 +10,13 @@ data(PimaIndiansDiabetes2)
 # data <- data[, 209:228]
 
 data <- PimaIndiansDiabetes2
+data <- data[complete.cases(data), ]
 response <- data[,9]
+data <- data[,-9]
 
-preProc <- preProcess(data[,-9], method=c("knnImpute"))
-data <- predict(preProc, data[,-9])
+
+# preProc <- caret::preProcess(data[,-9], method=c("knnImpute"))
+# data <- predict(preProc, data[,-9])
 
 model <- mclustBIC(data)
 
