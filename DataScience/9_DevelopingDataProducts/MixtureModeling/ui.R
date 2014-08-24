@@ -85,7 +85,7 @@ shinyUI(fluidPage(
                                  HTML("<br>
                                       <h2>About</h2>
                                       <p style=\"width:800px;text-align:justify\"><span style=\"color:#000000;font-size:16px\">
-                                      This tool has been created as part of the Coursera Course \"Developing Data Products\". 
+                                      This tool has been created as part of the Coursera Course \"Developing Data Products\".<br>
                                       It uses Mixtures of Gaussians for a Model Based Cluster analysis of the Pima Indian Diabetes Database. 
                                       Up to ten components can be chosen for the mixtures. The supervised classification result, together 
                                       with classification uncertainty and errors can be observed in 2D projections of the feature space. 
@@ -120,6 +120,17 @@ shinyUI(fluidPage(
                                         <li>diabetes onset within 5 years (0, 1)</li>
                                       </ul>
                                       </span></p><br>
+
+                                      <h2>Additional Information</h2>
+                                      <p style=\"width:800px;text-align:justify\"><span style=\"color:#000000;font-size:16px\">
+                                      <ul>  
+                                        <li>A quick introduction to Model-Based Clustering can be found on 
+                                        <a href='http://rpubs.com/jhooge/MixtureModeling'
+                                        target='_blank'>RPubs</a>.</li>
+                                        <li>The source code is hosted on <a href='https://github.com/jhooge/CourseraCourses/tree/master/DataScience/9_DevelopingDataProducts'
+                                        target='_blank'>Github</a></li>.
+                                      </ul>
+                                      </span></p>
                                       
                                       <h2>Acknowledgements</h2>
                                       <p style=\"width:800px;text-align:justify\"><span style=\"color:#000000;font-size:16px\">
