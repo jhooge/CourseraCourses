@@ -1,5 +1,3 @@
-# Normal Mixture Modeling for Model-Based Clustering
-
 ![](images/shinyApp.png?raw=true)
 
 This shiny app has been created as part of the Coursera Course \”Developing Data Products\”. 
