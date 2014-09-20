@@ -5,3 +5,4 @@
 
 # ignore large data file
 *.txt
+quiz*.*

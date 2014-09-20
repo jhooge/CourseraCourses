@@ -74,9 +74,4 @@ shinyServer(function(input, output) {
                                            Orientation=c(NA, NA, NA, NA, "coord. axes", "coord. axes", "coord. axes", "coord. axes", "equal", "variable", "variable", "variable"))
         covarianceStructures
     })
-    
-    
-    
-    
-    
 })

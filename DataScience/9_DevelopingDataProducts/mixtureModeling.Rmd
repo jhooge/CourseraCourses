@@ -1,0 +1,80 @@
+---
+title: "Mixture Modeling for Model Based Clustering"
+author: "Jens Hooge"
+date: "23.8.2014"
+framework: io_slides
+output: shiny
+---
+
+
+## What is Model-Based Clustering?
+
+The model-based clustering approach consists in using certain models for clusters 
+and attempting to optimize the fit between the data and the model.
+
+In practice, each cluster can be mathematically represented by a parametric distribution, like a Gaussian (continuous) or a Poisson (discrete). The entire data set is therefore modelled by a mixture of these distributions. An individual distribution used to model a specific cluster is often referred to as a component distribution.
+
+## Features
+
+A mixture model with high likelihood tends to have the following traits:
+
+- component distributions have high “peaks” (data in one cluster are tight);
+- the mixture model “covers” the data well (dominant patterns in the data are captured by component distributions).
+
+```{r echo=FALSE, hide=TRUE, message=FALSE}
+library(mclust)
+faithfulDens<-densityMclust(faithful)
+plot(faithfulDens,type="persp",col=grey(0.8))
+```
+
+## Classification in Action
+```{r echo=FALSE, hide=TRUE}
+library(mclust)
+data <- faithful
+model <- mclustBIC(data)
+
+modelSummary <- summary(model, data=data, 2)
+coordProj(data=data, dimens=c(1,2), what="classification",
+          parameters = modelSummary$parameters, z = modelSummary$z)
+```
+
+
+## Classification in Action
+
+```{r echo=FALSE, hide=TRUE}
+# library(mclust)
+# 
+# data <- faithful
+# model <- mclustBIC(data)
+# 
+# selectInput("x", label="X Variable", choices=names(data),
+#                         selected=names(data))
+# selectInput("y", label="Y Variable", choices=names(data),
+#                         selected=names(data))
+# sliderInput("clusters", "Number of Clusters", 1, 9, 2, step = 1)
+# 
+# selectedData <- reactive({
+#     c(input$x, input$y)
+# })
+#     
+# clusters <- reactive({input$clusters})
+#     
+# clusters <- reactive({
+#     mclust(selectedData(), clusters())
+# })
+#     
+# renderPlot({
+#     modelSummary <- summary(model, data=data, input$clusters)
+#     coordProj(data=data, dimens=selectedData(), what="classification",
+#               parameters = modelSummary$parameters, z = modelSummary$z)
+# })
+
+```
+
+## Where do I get it?
+
+Try it [HERE](http://jhooge.shinyapps.io/MixtureModeling/) !
+
+- It uses Mixtures of Gaussians for a Model Based Cluster analysis of the Pima Indian Diabetes Database.
+- Up to ten components can be chosen for the mixtures. 
+- The supervised classification result, together with classification uncertainty and errors can be observed in 2D projections of the feature space.
