@@ -13,3 +13,4 @@ This repository includes code for the Coursera courses
 - [Exploratory Data Analysis](https://www.coursera.org/course/exdata) - Johns Hopkins University
 - [Reproducible Research](https://www.coursera.org/course/repdata) - Johns Hopkins University
 - [Practical Machine Learning](https://www.coursera.org/course/predmachlearn) - Johns Hopkins University
+- [Developing Data Products](https://www.coursera.org/course/devdataprod) - Johns Hopkins University
