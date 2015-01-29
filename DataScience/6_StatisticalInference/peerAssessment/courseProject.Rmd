@@ -1,0 +1,185 @@
+---
+title: "Statistical Inference - Coursera"
+author: "Jens Hooge"
+date: "21.9.2014"
+output: html_document
+---
+
+Summary
+---
+
+This is the project for the statistical inference class. We will use simulation 
+to explore inference and do some simple inferential data analysis on the 
+ToothGrowth dataset. The project consists of two parts:
+
+1. Simulation exercises.
+2. Basic inferential data analysis.
+
+```{r, echo=FALSE, message=FALSE}
+library(reshape2)
+library(ggplot2)
+library(gridExtra)
+library(dplyr)
+```
+
+Simulation Excercise
+---
+
+For the simulation of the mean distribution of exponential distributions, 
+40 samples have been drawn from an exponential distribution with a rate
+factor of 0.2 and the mean as well as the standard deviation has been computed. 
+This was repeated between 1000 times, and the density of this mean 
+distribution was visualized together with a QQ Norm plot of the z-transformed 
+sample [Fig.: 1]. The function for this computation can be seen in the following 
+code chunk.
+
+```{r, echo=TRUE}
+simulateExpMean <- function(n, nosim, lambda) {
+    mu <- rep(0, nosim)
+    for (i in 1:nosim) {
+        mu[i] <- mean(rexp(n, lambda))
+    }
+    return(mu)
+}
+```
+
+```{r, echo=FALSE, message=FALSE}
+set.seed(42)
+lambda <- .2
+n <- 40
+nosim <- 1000
+simulations <- data.frame(nosim_100=simulateExpMean(n, 100, lambda),
+                          nosim_1000=simulateExpMean(n, 1000, lambda),
+                          nosim_10000=simulateExpMean(n, 10000, lambda),
+                          nosim_100000=simulateExpMean(n, 100000, lambda))
+```
+
+```{r, echo=FALSE}
+mu_hat <- colMeans(simulations)
+var_hat <- sapply(simulations, var)
+```
+
+```{r, echo=TRUE}
+sTest <- shapiro.test(sample(simulations$nosim_1000, size=5000))
+```
+
+A Shapiro Wilk Test confirmed the Null-Hypothesis [p=`r sTest$p.value`], that 
+the sample was drawn from a normal distribution with a sample mean of 
+$\hat\mu$=`r round(mu_hat[2],4)` and a $\hat\sigma^2$=`r round(var_hat[2],4)`, 
+which almost equal the theoretical distribution parameters
+$\mu$=$\lambda^{-1}$=`r lambda^-1` and 
+$\sigma^2$=$\frac{1}{n-1}\cdot\lambda^{-2}$=`r (1/(n-1))*lambda^-2`, 
+with $\lambda$=`r lambda` and n=`r n`.
+
+Computation of the coverage for the 95% confidence interval.
+```{r, echo=TRUE}
+mu_hat[2] + c(-1,1) * 1.96 * sqrt(var_hat[2])/sqrt(n)
+```
+
+Coverage above 95% confidence could be achieved for the interval [4.738, 5.232].
+
+Basic inferential data analysis
+---
+
+```{r, echo=TRUE, message=FALSE}
+data(ToothGrowth)
+```
+
+We will use the ToothGrowth dataset and provide a basic summary of the data.
+
+```{r, echo=TRUE}
+vitaminC <- filter(ToothGrowth, as.character(supp) == "VC")
+orangeJuice <- filter(ToothGrowth, as.character(supp) == "OJ")
+```
+
+```{r, echo=TRUE}
+summary(vitaminC$len); summary(orangeJuice$len); table(ToothGrowth$supp, 
+                                                       ToothGrowth$dose)
+```
+
+We can see that there is a difference in the mean teeth length and that the 
+data is balanced for both conditions, where the guinee pigs received orange juice
+(OC) or vitamin C (VC). Whether this difference in mean [Fig.: 2] is significant was explored using
+a simple paired t-test.
+
+```{r, echo=TRUE}
+t_test <- t.test(vitaminC$len, orangeJuice$len, paired=TRUE)
+```
+
+With a p-value of **0.0025**, we reject the null hypothesis and claim that there is a signficiant difference in the mean length of teeth under the two conditions **orange juice** and **vitamin C**. The
+95% confidence interval was shown to be **[-5.991341, -1.408659]**
+It was still unclear however, whether the dosage, in either of the conditions
+had an influence on the tooth growth. We ran two paired t-tests for dosages lesser
+or equal to 0.5 and greater than 0.5.
+
+```{r, echo=TRUE}
+t_test <- t.test(filter(vitaminC, dose <= .5)$len, 
+                 filter(orangeJuice, dose <= .5)$len, 
+                 paired=TRUE)
+```
+
+```{r, echo=TRUE}
+t_test <- t.test(filter(vitaminC, dose > .5)$len, 
+                 filter(orangeJuice, dose > .5)$len, 
+                 paired=TRUE)
+```
+
+Under the two conditions, dosages below 0.5 a significant difference **[p = 0.01547]**,
+with a 95% confidence interval of **[-9.236542, -1.263458]** in tooth growth was
+shown, as well as for dosages above 0.5 **[p = 0.05482]**, with a 95% confidence
+interval of **[-5.91682146, 0.06682146]**.
+
+Conclusion
+---
+
+It could be shown that, the difference in tooth growth under two conditions, was
+significantly different and tooth growth for dosages of up to 1 mg orange juice
+outperformed the effect on tooth growth of pure vitamin c of the same concentration.
+
+Appendix
+---
+
+## Fig 1 - Parameter Estimation via Simulation
+```{r fig 1, echo=FALSE, fig.width=8, fig.height=4}
+p1 <- ggplot() +  
+        geom_density(data=simulations, aes(x=nosim_1000, y=..density..)) +
+        geom_vline(xintercept = mean(simulations$nosim_1000), color="grey") +
+        geom_vline(xintercept = 1/lambda, color="black") + 
+        geom_text(aes(x=mean(simulations$nosim_1000), 
+                      label="estimated", 
+                      y=0.3), 
+                      colour="grey", angle=90, 
+                      vjust = 1.2, 
+                      text=element_text(size=8)) +
+        geom_text(aes(x=mean(simulations$nosim_1000), 
+                      label="expected", 
+                      y=0.3), 
+                      colour="black", angle=90, 
+                      vjust = -1, 
+                      text=element_text(size=8)) +
+        xlab(expression(paste("hat(mu) ", '=',
+                               mean(simulations$nosim_1000)))) +
+        labs(x="mu", y="Density") + 
+        theme_bw()
+
+p2 <- ggplot(data=simulations, 
+             aes(sample = scale(nosim_1000))) + 
+             stat_qq(alpha=0.3) + 
+             geom_abline(intercept=0, slope=1) +
+             theme_bw()
+
+grid.arrange(p1, p2,
+             ncol=2) 
+```
+
+## Fig 2 - Influence of Vitamin C on Tooth Growth
+```{r fig2, echo=FALSE, fig.width=8, fig.height=4}
+ToothGrowth$supp <- as.factor(ToothGrowth$supp)
+ToothGrowth$dose <- as.factor(ToothGrowth$dose)
+levels(ToothGrowth$supp) <- c("Orange Juice", "VitaminC")
+ggplot(ToothGrowth, aes(dose, len)) + 
+    geom_boxplot() +
+    geom_jitter(size=2, alpha=0.6) +
+    facet_grid(.~supp) +
+    theme_bw()
+```

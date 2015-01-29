@@ -257,12 +257,12 @@ In the scatter plot matrix it should be obvious that the knn models are consiste
 
 To predict the label vector with the final models, as well from knn and naive Bayes, I will use the predict function from caret and store the predicted vectors in a data frame testing. Because the prediction matrix also includes missing values I will omit those.
 
-```{r}
-p1 <- predict(knnModel, na.omit(X_test_selected))
-p2 <- predict(naiveBayesModel, na.omit(X_test_selected))
+```{r, warning=FALSE}
+p1 <- caret::predict(knnModel, na.omit(X_test_selected))
+p2 <- caret::predict(naiveBayesModel, na.omit(X_test_selected))
 testing <- data.frame(knn=p1, naiveBayes=p2)
-testing$knn <- as.character(prediction$knn)
-testing$naiveBayes <- as.character(prediction$naiveBayes)
+testing$knn <- as.character(testing$knn)
+testing$naiveBayes <- as.character(testing$naiveBayes)
 ```
 
 And here we go, the predicted label vectors of both models:

@@ -1,0 +1,283 @@
+---
+title: "Exploratory Data Analysis for the Development of a Predictive Language Model"
+author: "Jens Hooge"
+date: "16.11.2014"
+output: html_document
+---
+
+# Background
+The goal of this analysis is to give a brief overview over the data used in building
+a predictive language model. In this case we will be using three different text
+corpi, consisting of twitter, blog and news posts, thereby restricting ourselves
+on english texts. To form valid input for a prediction algorithm, the most widespread
+representation are frequency based n-grams. In the fields of computational linguistics and probability, an n-gram is a contiguous sequence of n items from a given sequence of text or speech. An n-gram of size 1 is referred to as a "unigram"; size 2 is a "bigram" (or, less commonly, a "digram"); size 3 is a "trigram". Larger sizes are sometimes referred to by the value of n, e.g., "four-gram", "five-gram", and so on. In our case an n-gram consists 
+of a sequence of n words and a corpus will be represented in a data structure,
+called term-document matrix. A mathematical matrix that describes the frequency 
+of terms that occur in a collection of documents. In a term-document matrix, 
+columns correspond to documents in the collection and rows correspond to 
+terms. There are various schemes for determining the value that each entry in 
+the matrix should take. In our case the entries consist of the absolute 
+frequency of terms within each text corpus and will serve as the input for our
+predictive language model.
+
+```{r, echo=FALSE, message=FALSE}
+# library(dplyr)
+# library(tm) ## requires R 3.1
+# library(wordcloud)
+library(data.table)
+library(gdata)
+library(ggplot2)
+library(reshape2)
+library(gridExtra)
+
+load("SparseTermDocumentDataFrames.RData")
+```
+
+```{r, echo=FALSE}
+plotWordCount <- function(df, title) {
+  
+  fig <- ggplot(df, aes(file, words)) + 
+      geom_bar(stat="identity", position="dodge") +
+      coord_flip() + 
+      labs(title = title) +
+      labs(x = "", y = "Count") + 
+      theme_bw() +
+      theme(plot.title   = element_text(size=18),
+            strip.text.y = element_text(size=14, angle=0),
+            axis.text.x  = element_text(size=12, angle=0),
+            axis.text.y  = element_text(size=12),
+            axis.title.x = element_text(size=10),
+            axis.title.y = element_text(size=10),          
+            legend.position = "none")
+  return(fig)
+}
+
+reformat <- function(df) {
+    tmp <- cbind(rownames(df), df)
+    rownames(tmp) <- NULL
+    colnames(tmp)[1] <- c("ngram")
+    tmp$ngram <- as.factor(tmp$ngram)
+    return(tmp)
+}
+
+plotBlogNGramFreq <- function(df, title) {
+    df <- reformat(df)
+    df <- df[with(df, order(-en_US.blogs.txt)), ]
+
+    ggplot(data=df[1:15,]) + 
+        geom_bar(aes(ngram, en_US.blogs.txt), stat="identity", position="dodge") +
+        coord_flip() + 
+        labs(title = title) +
+        labs(x = "", y = "Absolute Frequency") + 
+        theme_bw() +
+        theme(plot.title   = element_text(size=18),
+              strip.text.y = element_text(size=14, angle=0),
+              axis.text.x  = element_text(size=12, angle=0),
+              axis.text.y  = element_text(size=12),
+              axis.title.x = element_text(size=10),
+              axis.title.y = element_text(size=10),          
+              legend.position = "none")
+}
+
+plotNewsNGramFreq <- function(df, title) {
+    df <- reformat(df)
+    df <- df[with(df, order(-en_US.news.txt)), ]
+
+    ggplot(data=df[1:15,]) + 
+        geom_bar(aes(ngram, en_US.news.txt), stat="identity", position="dodge") +
+        coord_flip() + 
+        labs(title = title) +
+        labs(x = "", y = "Absolute Frequency") + 
+        theme_bw() +
+        theme(plot.title   = element_text(size=18),
+              strip.text.y = element_text(size=14, angle=0),
+              axis.text.x  = element_text(size=10, angle=0),
+              axis.text.y  = element_text(size=10),
+              axis.title.x = element_text(size=12),
+              axis.title.y = element_text(size=12),         
+              legend.position = "none")
+}
+
+plotTwitterNGramFreq <- function(df, title) {
+    df <- reformat(df)
+    df <- df[with(df, order(-en_US.twitter.txt)), ]
+
+    ggplot(data=df[1:15,]) + 
+        geom_bar(aes(ngram, en_US.twitter.txt), stat="identity", position="dodge") +
+        coord_flip() + 
+        labs(title = title) +
+        labs(x = "", y = "Absolute Frequency") + 
+        theme_bw() +
+        theme(plot.title   = element_text(size=18),
+              strip.text.y = element_text(size=14, angle=0),
+              axis.text.x  = element_text(size=10, angle=0),
+              axis.text.y  = element_text(size=10),
+              axis.title.x = element_text(size=12),
+              axis.title.y = element_text(size=12),          
+              legend.position = "none")
+}
+```
+
+## Features of the input data
+First we will give an overview of the original input data, which includes file
+size, word and line counts.
+```{r, echo=FALSE}
+file <- c("en_US.blogs.txt", "en_US.news.txt", "en_US.twitter.txt")
+# size <- c(humanReadable(file.info("data/en_US/original/en_US.blogs.txt")$size),
+#           humanReadable(file.info("data/en_US/original/en_US.news.txt")$size),
+#           humanReadable(file.info("data/en_US/original/en_US.twitter.txt")$size))
+# lines <- c(system("wc -l data/en_US/original/en_US.blogs.txt | cut -f1 -d' '", intern=TRUE),
+#            system("wc -l data/en_US/original/en_US.news.txt | cut -f1 -d' '", intern=TRUE),
+#            system("wc -l data/en_US/original/en_US.twitter.txt | cut -f1 -d' '", intern=TRUE))
+# words <- c(system("wc -w data/en_US/original/en_US.blogs.txt | cut -f1 -d' '", intern=TRUE),
+#            system("wc -w data/en_US/original/en_US.news.txt | cut -f1 -d' '", intern=TRUE),
+#            system("wc -w data/en_US/original/en_US.twitter.txt | cut -f1 -d' '", intern=TRUE))
+# lines <- as.integer(lines)
+# words <- as.integer(words)
+size <- c("210 MB", "210 MB", "160 MB")
+lines <- c(899288, 1010242, 2360148)
+words <- c(37334114, 34365936, 30341028)
+
+originalInfo <- data.frame(file=file, size=size, lines=lines, words=words)
+originalInfo
+```
+We can see that the the dataset requires about 580 MB and is balanced around the
+30-37 million words. The number of lines differ between 900000 words for the blog 
+corpus and about 2 million words. This is not surprising as the number of words
+for a tweet is limited to 140 characters and therefore consists of significantly
+less words, than the average blog or news post. Even though the file sizes do 
+not seem to be very large, representing them in a corpus term-document matrix 
+can be demanding on RAM. 
+
+For a proof of concept we therefore have randomly sampled 50000 lines of blogs and 
+news data and 150000 lines of twitter data.
+```{r, echo=FALSE}
+file <- c("en_US.blogs.txt", "en_US.news.txt", "en_US.twitter.txt")
+# size <- c(humanReadable(file.info("data/en_US/sample/en_US.blogs.txt")$size),
+#           humanReadable(file.info("data/en_US/sample/en_US.news.txt")$size),
+#           humanReadable(file.info("data/en_US/sample/en_US.twitter.txt")$size))
+# lines <- c(system("wc -l data/en_US/sample/en_US.blogs.txt | cut -f1 -d' '", intern=TRUE),
+#            system("wc -l data/en_US/sample/en_US.news.txt | cut -f1 -d' '", intern=TRUE),
+#            system("wc -l data/en_US/sample/en_US.twitter.txt | cut -f1 -d' '", intern=TRUE))
+# words <- c(system("wc -w data/en_US/sample/en_US.blogs.txt | cut -f1 -d' '", intern=TRUE),
+#            system("wc -w data/en_US/sample/en_US.news.txt | cut -f1 -d' '", intern=TRUE),
+#            system("wc -w data/en_US/sample/en_US.twitter.txt | cut -f1 -d' '", intern=TRUE))
+
+file <- as.factor(file)
+# lines <- as.integer(lines)
+# words <- as.integer(words)
+
+size <- c("12 MB", "10 MB", "10 MB")
+lines <- c(50000, 50000, 150000)
+words <- c(2064541, 1700165, 1930854)
+
+sampleInfo <- data.frame(file=file, size=size, lines=lines, words=words)
+sampleInfo
+```
+The file size of this sample is limited to about 32 MB, making it possible to
+store it in a term-document matrix on an average PC. The number of words 
+still balanced around 2 million, such that none of the corpi is over-represented.
+A comparison of word counts in the different corpi, can be seen in the following 
+figure.
+```{r, echo=FALSE, fig.width=12, fig.height=6}
+# wordCount1_fig <- plotWordCount(originalInfo, title="Word Count (original)")
+# wordCount2_fig <- plotWordCount(sampleInfo, title="Word Count (sample)")
+# wordCount_fig  <- grid.arrange(wordCount1_fig, wordCount2_fig, ncol=2)
+# wordCount_fig
+```
+
+# Summary Statistics
+In this section we will have a more detailed look at the n-gram represenatation
+of the input data. Therefore the term-document matrix has been computed for Uni-,
+Bi, 3 and 4-grams. The underlying corpi had been adjusted for stopwords, additional 
+white spaces had been stripped, and numbers and punctuation had been removed.
+As stated above, these matrices can be quite large but are
+sparse, meaning that they include many n-gram frequencies equal to 0, which won't
+contribute to the performance of a predictive model. Therefore we have removed those
+terms which have at least 30% of empty (i.e. terms occurrin 0 times in a document)
+elements. I.e., the resulting matrix contains only terms with a sparse factor of 
+30%. It is worth mentioning, that this significantly reduced the size of the
+term-document matrix, making it more feasible to store in memory. Following the
+summary statistics of the number of n-gram occurances in each of the corpi.
+
+## Unigrams
+```{r, echo=FALSE}
+summary(tdm1_small_df)
+```
+
+## Bigrams
+```{r, echo=FALSE}
+summary(tdm2_small_df)
+```
+
+## Three-grams
+```{r, echo=FALSE}
+summary(tdm3_small_df)
+```
+
+## Four-grams
+```{r, echo=FALSE}
+summary(tdm4_small_df)
+```
+
+Non surprisingly, the maximum number of n-gram occurances decreases for larger
+sequences. On the other hand the average number of occurances for Bi, 3- and 4-grams
+show no downward trend, which is unexpected. The above statistics however does not give
+any information which of the n-grams are more represented in the different corpi. The 15 most frequent n-grams can be seen in the following figures.
+
+## Twitter n-gram Statistics
+```{r, echo=FALSE, fig.width=8, fig.height=8}
+twitter1_fig <- plotTwitterNGramFreq(tdm1_small_df, "1-gram")
+twitter2_fig <- plotTwitterNGramFreq(tdm2_small_df, "2-gram")
+twitter3_fig <- plotTwitterNGramFreq(tdm3_small_df, "3-gram")
+twitter4_fig <- plotTwitterNGramFreq(tdm4_small_df, "4-gram")
+twitter_fig  <- grid.arrange(twitter1_fig, twitter2_fig, 
+                             twitter3_fig, twitter4_fig)
+twitter_fig
+```
+
+## Blog n-gram Statistics
+```{r, echo=FALSE, fig.width=8, fig.height=8}
+
+blog1_fig <- plotBlogNGramFreq(tdm1_small_df, "1-gram")
+blog2_fig <- plotBlogNGramFreq(tdm2_small_df, "2-gram")
+blog3_fig <- plotBlogNGramFreq(tdm3_small_df, "3-gram")
+blog4_fig <- plotBlogNGramFreq(tdm4_small_df, "4-gram")
+blog_fig  <- grid.arrange(blog1_fig, blog2_fig, 
+                          blog3_fig, blog4_fig)
+blog_fig
+```
+
+## News n-gram Statistics
+```{r, echo=FALSE, warning=FALSE, fig.width=8, fig.height=8}
+news1_fig <- plotNewsNGramFreq(tdm1_small_df, "1-gram")
+news2_fig <- plotNewsNGramFreq(tdm2_small_df, "2-gram")
+news3_fig <- plotNewsNGramFreq(tdm3_small_df, "3-gram")
+news4_fig <- plotNewsNGramFreq(tdm4_small_df, "4-gram")
+news_fig  <- grid.arrange(news1_fig, news2_fig, 
+                          news3_fig, news4_fig)
+news_fig
+```
+
+It can be seen that most people on twitter write about what they do, feel and love
+right at this moment. This is mostly shown in the high occurences of "just", "like"
+and "love" and even more so in the 4-gram "I feel like I'm". This is to be expected,
+as the 140 character limit, invites to post quick status updates of people's lifes. 
+A surprising result is, that many people seem to send their wishes for "happy mother's day"
+on May 5th ("cinco de mayo"). Mainly because Mother's Day is on May 10th in the US,
+but also because people should rather congratulate personally instead of using a medium, that their mother most likely is not proficient with. It is more likely however, that "cinco de mayo" is refering to a celebration day of Mexican Americans who see this day as a source of pride and 
+one way they can honor their ethnicity.
+
+A similar picture is drawn by the analysis of the n-grams of the blog corpus. According to the n-gram analysis people use this medium mostly to write about what the think and what they know about. This is to be expected, as these thoughts usually can not be limited to 140 characters
+like on Twitter. This can mostly be inferred from the high frequencies of "I think", "I know" and "I can".
+
+In contrast, news evolve around who said what, while at the same time refering mostly to 
+"The New York Times" and "The Dow Jones Average". While the high number of occurences of
+"New York" is expected, the number of "I think" is a bit surprising. After all news
+should be objective rather than subjective.
+
+## Conclusion and Future Work
+In conclusion, the n-grams show that the random sample seems to represent the "tone"
+of each medium on the web correctly. In turn this gives a good indication, that it indeed
+can be used for word prediction. A representative random sample of the corpi, consisting of about 6 million words, could be instantiated. This sample includes frequencies of up to 4-gram terms which can be used for various predictive language models. It could be seen however, that after the removal of sparse
+terms, the term-document matrix can be stored far more memory efficient. For a more representative perfomance measure, we plan to load the data in batches to compute term document matrices in parallel. It should then be possible to combine each term-document matrix, from which sparse terms have been removed and store the whole dataset memory efficiently. Given these matrices it is now possible to build a conventional language model, like HMM or the Katz's back-off model. However, these frequency count derived models usually have severe problems, when confronted with n-grams that have not been part of the training dataset, which make them unfit for a word prediction model. According to current literature, this is even the case if smoothing (assigning some of the total probability mass to unseen words or n-grams) is applied. A promising solution might be neural network language models, which use a different data structure called word embeddings. A word embedding is a function that maps words in some language in a high dimensional, real-valued vectorspace. These word vectors can then be clustered by similarity. Similar words being close together then allow us to generalize from one n-gram to a class of similar n-grams. Given the respective n-1-grams it then would be possible to predict synonyms for the last word in a sequence of words. So the next steps will include further clean up of the input data, Good-Turing frequency estimation of unseen n-grams, computation of word embeddings, using the Brown clustering approach for a word and n-gram similarity measure and the definition of proper input and output layers of an RNNLM (Recursive Neural Network Language Model).
