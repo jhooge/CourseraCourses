@@ -1,7 +1,7 @@
 ---
 title: "Exploratory Data Analysis for the Development of a Predictive Language Model"
 author: "Jens Hooge"
-date: "16.11.2014"
+date: "20.03.2016"
 output: html_document
 ---
 
@@ -9,8 +9,7 @@ output: html_document
 The goal of this analysis is to give a brief overview over the data used in building
 a predictive language model. In this case we will be using three different text
 corpi, consisting of twitter, blog and news posts, thereby restricting ourselves
-on english texts. To form valid input for a prediction algorithm, the most widespread
-representation are frequency based n-grams. In the fields of computational linguistics and probability, an n-gram is a contiguous sequence of n items from a given sequence of text or speech. An n-gram of size 1 is referred to as a "unigram"; size 2 is a "bigram" (or, less commonly, a "digram"); size 3 is a "trigram". Larger sizes are sometimes referred to by the value of n, e.g., "four-gram", "five-gram", and so on. In our case an n-gram consists 
+on english texts. To form valid input for a prediction algorithm, the most widespread representation are frequency based n-grams. In the fields of computational linguistics and probability, an n-gram is a contiguous sequence of n items from a given sequence of text or speech. An n-gram of size 1 is referred to as a "unigram"; size 2 is a "bigram" (or, less commonly, a "digram"); size 3 is a "trigram". Larger sizes are sometimes referred to by the value of n, e.g., "four-gram", "five-gram", and so on. In our case an n-gram consists 
 of a sequence of n words and a corpus will be represented in a data structure,
 called term-document matrix. A mathematical matrix that describes the frequency 
 of terms that occur in a collection of documents. In a term-document matrix, 
@@ -123,15 +122,15 @@ First we will give an overview of the original input data, which includes file
 size, word and line counts.
 ```{r, echo=FALSE}
 file <- c("en_US.blogs.txt", "en_US.news.txt", "en_US.twitter.txt")
-# size <- c(humanReadable(file.info("data/en_US/original/en_US.blogs.txt")$size),
-#           humanReadable(file.info("data/en_US/original/en_US.news.txt")$size),
-#           humanReadable(file.info("data/en_US/original/en_US.twitter.txt")$size))
-# lines <- c(system("wc -l data/en_US/original/en_US.blogs.txt | cut -f1 -d' '", intern=TRUE),
-#            system("wc -l data/en_US/original/en_US.news.txt | cut -f1 -d' '", intern=TRUE),
-#            system("wc -l data/en_US/original/en_US.twitter.txt | cut -f1 -d' '", intern=TRUE))
-# words <- c(system("wc -w data/en_US/original/en_US.blogs.txt | cut -f1 -d' '", intern=TRUE),
-#            system("wc -w data/en_US/original/en_US.news.txt | cut -f1 -d' '", intern=TRUE),
-#            system("wc -w data/en_US/original/en_US.twitter.txt | cut -f1 -d' '", intern=TRUE))
+# size <- c(humanReadable(file.info("data/final/en_US/original/en_US.blogs.txt")$size),
+#           humanReadable(file.info("data/final/en_US/original/en_US.news.txt")$size),
+#           humanReadable(file.info("data/final/en_US/original/en_US.twitter.txt")$size))
+# lines <- c(system("wc -l data/en_US/original/final/en_US.blogs.txt | cut -f1 -d' '", intern=TRUE),
+#            system("wc -l data/en_US/original/final/en_US.news.txt | cut -f1 -d' '", intern=TRUE),
+#            system("wc -l data/en_US/original/final/en_US.twitter.txt | cut -f1 -d' '", intern=TRUE))
+# words <- c(system("wc -w data/en_US/original/final/en_US.blogs.txt | cut -f1 -d' '", intern=TRUE),
+#            system("wc -w data/en_US/original/final/en_US.news.txt | cut -f1 -d' '", intern=TRUE),
+#            system("wc -w data/en_US/original/final/en_US.twitter.txt | cut -f1 -d' '", intern=TRUE))
 # lines <- as.integer(lines)
 # words <- as.integer(words)
 size <- c("210 MB", "210 MB", "160 MB")
@@ -153,15 +152,15 @@ For a proof of concept we therefore have randomly sampled 50000 lines of blogs a
 news data and 150000 lines of twitter data.
 ```{r, echo=FALSE}
 file <- c("en_US.blogs.txt", "en_US.news.txt", "en_US.twitter.txt")
-# size <- c(humanReadable(file.info("data/en_US/sample/en_US.blogs.txt")$size),
-#           humanReadable(file.info("data/en_US/sample/en_US.news.txt")$size),
-#           humanReadable(file.info("data/en_US/sample/en_US.twitter.txt")$size))
-# lines <- c(system("wc -l data/en_US/sample/en_US.blogs.txt | cut -f1 -d' '", intern=TRUE),
-#            system("wc -l data/en_US/sample/en_US.news.txt | cut -f1 -d' '", intern=TRUE),
-#            system("wc -l data/en_US/sample/en_US.twitter.txt | cut -f1 -d' '", intern=TRUE))
-# words <- c(system("wc -w data/en_US/sample/en_US.blogs.txt | cut -f1 -d' '", intern=TRUE),
-#            system("wc -w data/en_US/sample/en_US.news.txt | cut -f1 -d' '", intern=TRUE),
-#            system("wc -w data/en_US/sample/en_US.twitter.txt | cut -f1 -d' '", intern=TRUE))
+# size <- c(humanReadable(file.info("data/final/en_US/sample/en_US.blogs.txt")$size),
+#           humanReadable(file.info("data/final/en_US/sample/en_US.news.txt")$size),
+#           humanReadable(file.info("data/final/en_US/sample/en_US.twitter.txt")$size))
+# lines <- c(system("wc -l data/final/en_US/sample/en_US.blogs.txt | cut -f1 -d' '", intern=TRUE),
+#            system("wc -l data/final/en_US/sample/en_US.news.txt | cut -f1 -d' '", intern=TRUE),
+#            system("wc -l data/final/en_US/sample/en_US.twitter.txt | cut -f1 -d' '", intern=TRUE))
+# words <- c(system("wc -w data/final/en_US/sample/en_US.blogs.txt | cut -f1 -d' '", intern=TRUE),
+#            system("wc -w data/final/en_US/sample/en_US.news.txt | cut -f1 -d' '", intern=TRUE),
+#            system("wc -w data/final/en_US/sample/en_US.twitter.txt | cut -f1 -d' '", intern=TRUE))
 
 file <- as.factor(file)
 # lines <- as.integer(lines)

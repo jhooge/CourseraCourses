@@ -1,0 +1,382 @@
+---
+title: "Preprocessing of Swiftkey Dataset"
+output: html_notebook
+---
+
+This notebook describes the data preprocessing steps prior to the implementation
+of a Long-Short Term Memory for next-word prediction. The goal of this exercise
+is to build a shiny app with a textfield, in which a user can enter arbitrary 
+text. Our model will then present a few suggestions about the most likely next 
+word, based on the context of the entered text.
+
+```{r}
+library(tictoc) ## timers
+library(keras)
+source("helpers.R") ## Include some untility function
+TEXT_DATA_DIR <- "./data"
+EMBEDDING_DIR <- "./data/embeddings"
+PROFANITY_DIR <- "./data/profanity"
+```
+
+## Getting the Data
+
+We will download the Swiftkey dataset, which includes news and blog articles as
+well as a tweets in german, english, finish and russian language. Furthermore 
+we will need some word embeddings to include some context in our word prediction.
+In particular we will use the GloVe embeddings by 
+[Pennington et al; 2014](https://nlp.stanford.edu/pubs/glove.pdf). Because we 
+would not want our algorithm to suggest profanity we will need a list of bad 
+words we will filter from each corpus. We will limit ourselves to the english 
+language here and download a list of profanity terms from Carnegie Mellon.
+
+```{r}
+download_data(TEXT_DATA_DIR, 
+              'https://d396qusza40orc.cloudfront.net/dsscapstone/dataset/',
+              'Coursera-SwiftKey.zip', decompress=T,
+              mode = "wb", method="wget")
+download_data(EMBEDDING_DIR, 'http://nlp.stanford.edu/data/wordvecs/', 
+              'glove.6B.zip', decompress=T,
+              mode = "wb", method="wget")
+download_data(PROFANITY_DIR, "http://www.cs.cmu.edu/~biglou/resources/",
+              "bad-words.txt", decompress=F,
+              mode = "wb", method="wget") 
+```
+
+After download we should have a data directory which contains subdirectories for
+our embeddings, profanity list and text corpi. Most importantly the text corpi
+are located in the folder final divided by language. In the next step we will 
+process and filter the english corpus, which can be found in the directory
+en_US. First we have to read the text files line by line and store them in a
+list for further processing. We will use the read_corpus function in our 
+utilities module helpers.R, which we included in the beginning of this report.
+
+```{r, warning=FALSE}
+EN_US_DIR <- file.path(TEXT_DATA_DIR, "final/en_US")
+en_US.blogs <- read_corpus(file.path(EN_US_DIR, "en_US.blogs.txt"))
+en_US.news <- read_corpus(file.path(EN_US_DIR, "en_US.news.txt"))
+en_US.twitter <- read_corpus(file.path(EN_US_DIR, "en_US.twitter.txt"))
+```
+
+Let's get some impression about the content and print the first 500 characters 
+of each of those files. For a more details, feel free to have a
+look at my [exploratory data analysis report](http://rpubs.com/jhooge/predictive_language_model) on RPubs.
+
+```{r}
+print(strhead(en_US.blogs, 500))
+print(strhead(en_US.news, 500))
+print(strhead(en_US.twitter, 500))
+```
+
+Nothing surprising here, and we can already see that especially the twitter 
+corpus looks pretty messy however. Abreviations, emotes, typos and most likely
+the twitter lingo like "omfgbbqsauce". To be able to work with this we will have
+to harmonize and clean up each of these corpi. The clean_text function provided
+in our utility module takes care of many of the issues within out datasets. 
+By calling this function we will convert everything to lowercase, remove 
+punctuation, numbers, replace abreviations like "we'll" -> "we will" and 
+"omg" -> "oh my god", but also twitter specifics like "RT" -> "retweet". 
+Furthermore it will remove all non-alphanumerics and all additional whitespaces.
+After the cleaning is done, we will run each of those files through our
+filter_words function which removes any profanity by utilising the bad_words
+list in our profanity directory.
+
+## Cleaning the Corpus and Profanity Filtering
+
+```{r}
+## Run preprocessing on each of the input files
+bad_words <- as.character(read.csv(file.path(PROFANITY_DIR, "bad-words.txt"), 
+                                             sep = "\n")[,1])
+
+dir.create("data/derived")
+tic("total")
+tic("en_US.blogs")
+en_US.blogs <- clean_text(en_US.blogs)
+en_US.blogs <- filter_words(en_US.blogs, bad_words)
+write(en_US.blogs, file = "data/derived/en_US.blogs.txt")
+print("[INFO] en_US.blogs.txt DONE")
+toc()
+
+tic("en_US.news")
+en_US.news <- clean_text(en_US.news)
+en_US.news <- filter_words(en_US.news, bad_words)
+write(en_US.news, file = "data/derived/en_US.news.txt")
+print("[INFO] en_US.news.txt DONE")
+toc()
+
+tic("en_US.twitter")
+en_US.twitter <- clean_text(en_US.twitter, twitter=TRUE)
+en_US.twitter <- filter_words(en_US.twitter, bad_words)
+write(en_US.twitter, file = "data/derived/en_US.twitter.txt")
+print("[INFO] en_US.twitter.txt DONE")
+toc()
+toc()
+```
+
+This took a while, so let's have a look at the result and make sure everything
+worked.
+
+```{r}
+strhead(en_US.blogs, 500)
+strhead(en_US.news, 500)
+strhead(en_US.twitter, 500)
+```
+
+This looks a lot more reasonable. Especially the twitter corpus looks a lot
+cleaner now. Unfortunately, emotes (like "D;", ":D" and so on) resulted in 
+some leftover characters in our text. This shouldn't be much of a problem in 
+downstream analysis as we will only use words above a frequency threshold.
+
+## Preparing the Training Dataset
+
+The way we will train our LSTM is by presenting it a number of randomly selected,
+but coherend word sequences from each of our corpi and combining these in one
+big training dataset. Because we don't know how much text a user will enter in 
+our app's text field, we will include sequences of different lengths up to 10
+words. This is similar to a more common n-gram approach, but 
+typically these approaches don't include sequences above the length of 5. 
+Here we will exploit LSTM's ability to take into account long term dependencies
+with in a text, enabling us to use much larger sequences of text during 
+training and testing.
+Concretely we will sample 30.000 sequences uniformly from each corpus with a 
+length up to 10 words. Each of these sequences will become a training sample 
+and the respective succeeding word will be its corresponding label for 
+prediction. In the end we will combine all sequences in one big training 
+dataset, shuffle it and save it in a csv file for further processing.
+
+```{r}
+# en_US.blogs <- read_corpus("data/derived/en_US.blogs.txt")
+# en_US.news <- read_corpus("data/derived/en_US.news.txt")
+# en_US.twitter <- read_corpus("data/derived/en_US.twitter.txt")
+```
+
+```{r}
+n <- 5000
+max_size <- 10
+seed <- 42
+tic("Building training dataset")
+train.blogs <- sample_chunks(split_to_words(en_US.blogs), n, max_size, seed)
+train.news <- sample_chunks(split_to_words(en_US.news), n, max_size, seed)
+train.twitter <- sample_chunks(split_to_words(en_US.twitter), n, max_size, seed)
+
+train.full <- rbind(train.blogs, train.news)
+rm(train.blogs)
+rm(train.news)
+train.full <- rbind(train.full, train.twitter)
+rm(train.twitter)
+train.full <- train.full[sample(nrow(train.full)), ] ## shuffle rows
+train.full$X <- as.character(train.full$X)
+train.full$y <- as.character(train.full$y)
+write.csv(train.full, file = "data/derived/en_US_training_seq10_15k.csv", 
+          row.names=FALSE)
+toc()
+```
+
+A quick look at the summary statistics of sequence lengths should tell us
+whether everything has worked out.
+
+```{r}
+summary(sapply(as.character(train.full$X), function(x) length(split_to_words(x))))
+```
+
+All we're looking here for is the minimal, maximal and mean value. Each of these
+are correct under the assumption of unifom sampling our sequences. Let's make 
+sure the sequences and successors make sense.
+
+```{r}
+train.full
+```
+
+## Loading Embeddings
+
+Unfortunately the words themselves cannot directly be used in an LSTM, as it
+requires its inputs to be numerical vectors. We could simply encode our words
+as one-hot vectosr with the dimension of our vocabulary. The only non-zero 
+element in this vector then is at position of its vocabulary index. The problem
+of this type of encoding is that context between words is ignored, however. A 
+solution to this is to compute real valued embedding vectors. The cosine 
+distance between these vectors then measures the similarity between two words. 
+Using this context what we could do is predict the next word, based on the 
+sequences our LSTM has been trained with and then suggest a bunch of alternative 
+words which have a high cosine similarity, between their vector embeddings.
+Computing these type of embeddings require very large vocabularies however and 
+we don't have this amount of data. Fortunately, on english text these embeddings
+have already be computed by academic groups like [Pennington et al; 2014](https://nlp.stanford.edu/pubs/glove.pdf), such that we can use these to
+pretrain our LSTM. Since we have downloaded these embeddings before let's load
+them here. Due to memory reasons, we will limit ourselves to the 50 dimensional 
+embeddings, even though the dimensionality of these embeddings can be seen as
+a hyperparameter for our LSTM and higher dimensionality might have a positive 
+effect on predictive performance. 
+
+```{r}
+EMBEDDING_DIM <- 50
+
+tic("Load Embeddings")
+embeddings_index <- new.env(parent = emptyenv())
+lines <- readLines(file.path(EMBEDDING_DIR, 'glove.6B.50d.txt'))
+for (line in lines) {
+  values <- strsplit(line, ' ', fixed = TRUE)[[1]]
+  word <- values[[1]]
+  coefs <- as.numeric(values[-1])
+  embeddings_index[[word]] <- coefs
+}
+toc()
+cat(sprintf("Found %i embeddings.\n", length(embeddings_index)))
+```
+
+Because it speed up the process significantly, we save our embedding in their 
+own environment. This has the disadvantage,  that we can't access our embedding
+vectors by index anymore, but since we stored them in a named list, we will
+access each of them by name.
+
+```{r}
+embeddings_index[["<unk>"]]
+```
+
+It has a reason why I choose "<unk>" as an example above, because it is reserved
+for words that haven't been seen during training of these embeddings. As we will
+limit ourselves to the most frequent words in our training dataset, it is
+possible that we will encounter words during test time for which no embedding
+vector exists. These "unknown" words we will map to the "<unk>" embedding. 
+
+## Tokenize 
+To map each word in our corpus to its embedding vector we first have to tokenize
+training dataset. Following the approach by (Bengio et al., 2001, 2003), we will
+limit ourselves to a vocabulary size of 20k words. The tokenizer vectorizes a 
+text corpus, by turning each text into either a sequence of integers (each 
+integer being the index of a token in a dictionary) or into a vector where the 
+coefficient for each token could be binary, based on word count, based on 
+tf-idf and so on. By default, all punctuation is removed, turning the texts into space-separated sequences of words (words maybe include the ' character). These 
+sequences are then split into lists of tokens. They will then be indexed or 
+vectorized. 0 is a reserved index that won't be assigned to any word.
+
+```{r}
+MAX_NUM_WORDS <- 20000
+train.full <- read.csv("data/derived/en_US_training_seq10_30k.csv", as.is = T)
+texts <- paste(c(train.full$X, train.full$y), collapse=" ")
+## BE AWARE: num_words seems to be ignored by the tokenizer
+tokenizer <- text_tokenizer(num_words = MAX_NUM_WORDS, char_level = FALSE)
+tokenizer %>% fit_text_tokenizer(as.array(texts))
+```
+
+Per default the text tokenizer sorts stores each word in an index sorted by
+frequency. As we want to limit the size of our vocabulary to `MAX_NUM_WORDS`, 
+and `text_tokenizer` seems to ignore the `num_words` parameter, we will identify 
+the words with lowest frequency with an index above `MAX_NUM_WORDS` and replace 
+them in our training dataset with the unknown word token `<unk>`. In a later 
+step we will also map each word, for which we don't find an embedding, to the
+same token. By doing so, we will make sure that we always return an embedding
+vector during training.
+
+```{r}
+word_index <- tokenizer$word_index
+vocab_size <- length(word_index)
+rare_words <- names(word_index)[(MAX_NUM_WORDS+1):vocab_size]
+rare_counts <- sapply(rare_words, function(w) tokenizer$word_counts[[w]])
+```
+
+```{r}
+library(stringr)
+tic("Replacing low freq words")
+pattern <- sapply(rare_words, function(x) paste0("\\b", x, "\\b"))
+pattern <- paste(pattern, collapse="|")
+tmp.X <- sapply(train.full$X, function(x) str_replace_all(x, pattern, "<unk>"))
+tmp.y <- str_replace_all(train.full$y, pattern, "<unk>")
+names(tmp.X) <- NULL
+names(tmp.y) <- NULL
+toc()
+```
+
+```{r}
+length(tmp.y)
+sum("<unk>" %in% tmp.y)
+sum(sapply(tmp.X, function(x) {sum("<unk>" %in% split_to_words(x))}))
+```
+
+```{r}
+tmp <- unlist(sapply(tmp.X, function(x) split_to_words(x)))
+names(tmp) <- NULL
+```
+
+```{r}
+hits <- sapply(train.full$X, function(x) {"gory" %in% split_to_words(x)})
+sum(hits)
+hits <- "domes" %in% train.full$y
+sum(hits)
+hits <- sapply(tmp.X, function(x) {"<unk>" %in% split_to_words(x)})
+sum(hits)
+hits <- "<unk>" %in% tmp.y
+sum(hits)
+```
+
+
+Ok, let's call the tokenizer again and check the `word_index`.
+
+```{r}
+texts <- paste(c(tmp.X, tmp.y), collapse=" ")
+## BE AWARE: num_words seems to be ignored by the tokenizer
+tokenizer <- text_tokenizer(num_words = MAX_NUM_WORDS, char_level = FALSE)
+tokenizer %>% fit_text_tokenizer(as.array(texts))
+```
+
+```{r}
+strhead(texts, 10000)
+length(tokenizer$word_index)
+tokenizer$word_index[["<unk>"]]
+tokenizer$word_index[["unk"]]
+tokenizer$word_index[["baaack"]]
+```
+
+```{r}
+tokenizer$oov_token
+```
+
+Per default the words in in `word_index` ar sorted by word frequency.
+
+```{r}
+word_cnts <- sapply(head(names(word_index), 20), 
+                   function(x) tokenizer$word_counts[[x]])
+barplot(word_cnts)
+```
+
+## Preparing the Embedding Matrix
+
+For our LSTM we require an embedding layer to add to our architecture. This 
+layer can be build using a matrix of embedding vectors. The embedding matrix
+is of dimension `vocab_size` x `EMBEDDING_DIM`. First we initilaize a matrix of
+these dimensions with zeros. Then we will go through the word_index word by word 
+and check whether the index is smaller than our vocabulary size limit 
+`MAX_NUM_WORDS`. If that's the case we will store the word embedding at that 
+index in the embedding matrix. If we encounter a word in our corpus that
+is not found in the pretrained embeddings its embedding will be a 0-vector. An
+obvious disadvatage of this approach is that all words, which index is larger
+than `MAX_NUM_WORDS`, will be ignored. Because our `word_index` is sorted by 
+word frequency, these words should occur rarely in a corpus during test time.
+
+```{r}
+embedding_matrix <- matrix(0L, nrow = MAX_NUM_WORDS, ncol = EMBEDDING_DIM)
+for (word in names(word_index)) {
+  index <- word_index[[word]]
+  if (index >= MAX_NUM_WORDS)
+    next
+  embedding_vector <- embeddings_index[[word]]
+  if (!is.null(embedding_vector)) {
+    # words not found in embedding index will be set to the "<unk>" embedding.
+    embedding_matrix[index, ] <- embeddings_index$"<unk>"
+  }
+}
+```
+
+It might be worthwhile to check which kind of words were not found in the 
+pretrained embedding matrix, as well as the words that were above our 
+`MAX_NUM_WORDS` limit.
+
+```{r}
+is_zero_vec <- rowSums(embedding_matrix) == 0
+zero_indices <- which(is_zero_vec, embedding_matrix[1, ])
+unknown_words <- names(word_index)[zero_indices]
+length(unknown_words)
+```
+
+```{r}
+embeddings_index$"<unk>"
+```
